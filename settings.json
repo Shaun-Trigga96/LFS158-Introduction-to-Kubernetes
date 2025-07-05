@@ -1,0 +1,19 @@
+{
+    "markdown.preview.breaks": true,
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000,
+    "editor.wordWrap": "on",
+    "explorer.compactFolders": false,
+    "todo-tree.highlights.defaultHighlight": {
+        "icon": "alert",
+        "type": "tag",
+        "foreground": "red",
+        "background": "white",
+        "opacity": 50
+    },
+    "todo-tree.highlights.customHighlight": {
+        "TODO": {"icon": "check", "foreground": "black", "iconColour": "yellow"},
+        "STUDY": {"icon": "book", "foreground": "white", "background": "blue"},
+        "PRACTICE": {"icon": "tools", "foreground": "white", "background": "green"}
+    }
+}
