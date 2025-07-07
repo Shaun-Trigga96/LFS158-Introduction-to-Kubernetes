@@ -70,7 +70,7 @@ The `cloud-controller-manager` runs controllers or operators responsible to inte
 
 ### Key-Value Data Store (etcd)
 
-[`etcd`](https://etcd.io/) is an open source project under the [Cloud Native Computing Foundation (CNCF)](https://www.cncf.io/). etcd is a strongly consistent, distributed key-value data store used to persist a Kubernetes cluster's state. New data is written to the data store only by appending to it, data is never replaced in the data store. Obsolete data is compacted (or shredded) periodically to minimize the size of the data store.
+[`etcd`](https://etcd.io/) is an open source project under the [Cloud Native Computing Foundation (CNCF)](https://www.cncf.io/). `etcd` is a strongly consistent, distributed key-value data store used to persist a Kubernetes cluster's state. New data is written to the data store only by appending to it, data is never replaced in the data store. Obsolete data is compacted (or shredded) periodically to minimize the size of the data store.
 
 Out of all the control plane components, only the API Server is able to communicate with the etcd data store.
 
@@ -241,7 +241,7 @@ When a grouping of containers defined by a Pod is started, a special infrastruct
 
 ## Pod-to-Pod Communication Across Nodes
 
-In a Kubernetes cluster, Pods (groups of containers) are scheduled on nodes in a nearly unpredictable fashion. Regardless of their host node, Pods are expected to be able to communicate with all other Pods in the cluster, all without the implementation of Network Address Translation (NAT). This is a fundamental requirement of any networking implementation in Kubernetes.
+In a Kubernetes cluster, Pods (groups of containers) are scheduled on nodes in a nearly unpredictable fashion. Regardless of their host node, Pods are expected to be able to communicate with all other Pods in the cluster, all without the implementation of `Network Address Translation (NAT)`. This is a fundamental requirement of any networking implementation in Kubernetes.
 
 The Kubernetes network model aims to reduce complexity, and it treats Pods as VMs on a network, where each VM is equipped with a network interface - thus each Pod receiving a unique IP address. This model is called `"IP-per-Pod"` and ensures Pod-to-Pod communication, just as VMs are able to communicate with each other on the same network.
 
