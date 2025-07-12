@@ -47,7 +47,7 @@ Collectively, the control plane node(s) and the worker node(s) represent the Kub
 
 ## Namespaces
 
-If multiple users and teams use the same Kubernetes cluster we can partition the cluster into virtual sub-clusters using `Namespaces`. The names of the resources/objects created inside a Namespace are unique, but not across Namespaces in the cluster.
+If multiple users and teams use the same Kubernetes cluster we can partition the cluster into virtual sub-clusters using [`Namespaces`](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/). The names of the resources/objects created inside a Namespace are unique, but not across Namespaces in the cluster.
 
 To list all the Namespaces, we can run the following command:
 
@@ -75,7 +75,7 @@ Namespaces are one of the most desired features of Kubernetes, securing its lead
 
 ## Pods
 
-A `Pod` is the smallest Kubernetes workload object. It is the unit of deployment in Kubernetes, which represents a single instance of the application. A Pod is a logical collection of one or more containers, enclosing and isolating them to ensure that they:
+A [`Pod`](https://kubernetes.io/docs/concepts/workloads/pods/) is the smallest Kubernetes workload object. It is the unit of deployment in Kubernetes, which represents a single instance of the application. A Pod is a logical collection of one or more containers, enclosing and isolating them to ensure that they:
 
 - Are scheduled together on the same host with the Pod.
 - Share the same network namespace, meaning that they share a single IP address originally assigned to the Pod.
