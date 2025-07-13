@@ -67,7 +67,7 @@ We assign a name to the logical grouping, referred to as a *Service*. The `Servi
 
 `Services` can expose single `Pods`, `ReplicaSets`, `Deployments`, `DaemonSets`, and `StatefulSets`. When exposing the `Pods` managed by an operator, the Service's Selector may use the same label(s) as the operator. A clear benefit of a Service is that it watches application Pods for any changes in count and their respective IP addresses while automatically updating the list of corresponding endpoints. Even for a single-replica application, run by a single Pod, the Service is beneficial during self-healing (replacement of a failed Pod) as it immediately directs traffic to the newly deployed healthy Pod.
 
-# Service Object Example
+## Service Object Example
 
 This section provides an example of a Service object definition, demonstrating the declarative method for defining an object. This can serve as a template for more complex Service definitions. Omitting the `Service type` from the definition manifest creates the default service type, `ClusterIP`.
 
@@ -128,7 +128,7 @@ $ kubectl get svc,ep frontend-svc
 
 ## kube-proxy
 
-Each cluster node runs a daemon called [`kube-proxy`](https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies), a node agent that watches the API server on the control plane node for the addition, updates, and removal of Services and endpoints. `kube-proxy` is responsible for implementing the Service configuration on behalf of an administrator or developer, in order to enable traffic routing to an exposed application running in Pods. In the example below, for each new Service, on each node, `kube-proxy` configures `iptables` rules to capture the traffic for its `ClusterIP` and forwards it to one of the Service's endpoints. Therefore, any node can receive the external traffic and then route it internally in the cluster based on the `iptables` rules. When the Service is removed, `kube-proxy` removes the corresponding `iptables` rules on all nodes as well.
+Each cluster node runs a `daemon` called [`kube-proxy`](https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies), a node agent that watches the API server on the control plane node for the `addition`, `updates`, and `removal` of `Services` and `endpoints`. `kube-proxy` is responsible for implementing the Service configuration on behalf of an administrator or developer, in order to enable traffic routing to an exposed application running in Pods. In the example below, for each new Service, on each node, `kube-proxy` configures `iptables` rules to capture the traffic for its `ClusterIP` and forwards it to one of the Service's endpoints. Therefore, any node can receive the external traffic and then route it internally in the cluster based on the `iptables` rules. When the Service is removed, `kube-proxy` removes the corresponding `iptables` rules on all nodes as well.
 
 Just as the `kube-proxy` node agent runs redundantly on each cluster node, the `iptables` are populated in a redundant fashion by their respective node agents so that each `iptables` instance stores complete routing rules for the entire cluster. This helps with the Service objects implementation to reproduce a distributed load balancing mechanism.
 
@@ -161,7 +161,7 @@ spec:
   externalTrafficPolicy: Local
 ```
 
-# Service Discovery
+## Service Discovery
 
 As Services are the primary mode of communication between containerized applications managed by Kubernetes, it is helpful to be able to discover them at runtime. Kubernetes supports two methods for discovering Services: Environment variables and DNS.
 
@@ -254,3 +254,75 @@ $ kubectl expose deploy frontend --name=frontend-svc \
 $ kubectl create service nodeport frontend-svc \
 --tcp=80:5000 --node-port=32233
 ```
+
+## ServiceType: LoadBalancer
+
+With the [`LoadBalancer`](https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer) *ServiceType*:
+
+- NodePort and ClusterIP are automatically created, and the external load balancer will route to them.
+- The Service is exposed at a static port on each worker node.
+- The Service is exposed externally using the underlying cloud provider's load balancer feature.
+
+![LoadBalancer](LoadBalancer.png)
+
+The `LoadBalancer` *ServiceType* will only work if the underlying infrastructure supports the automatic creation of Load Balancers and has the respective support in Kubernetes, as is the case with Google Cloud Platform and AWS. If no such feature is configured, the LoadBalancer IP address field is not populated, it remains in a Pending state, but the Service will still work as a typical NodePort type Service.
+
+## ServiceType: ExternalIP
+
+A Service can be mapped to an [`ExternalIP`](https://kubernetes.io/docs/concepts/services-networking/service/#external-ips) address if it can route to one or more of the worker nodes. Traffic that is `ingressed` into the cluster with the ExternalIP (as destination IP) on the Service port gets routed to one of the Service endpoints. This type of service requires an external cloud provider such as Google Cloud Platform or AWS and a Load Balancer configured on the cloud provider's infrastructure.
+
+![ExternalIP](ExternalIP.png)
+
+Please note that ExternalIPs are not managed by Kubernetes. The cluster administrator has to configure the routing which maps the ExternalIP address to one of the nodes.
+
+## ServiceType: ExternalName
+
+[`ExternalName`](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) is a special *ServiceType* that has no Selectors and does not define any endpoints. When accessed within the cluster, it returns a `CNAME` record of an externally configured Service.
+
+The primary use case of this *ServiceType* is to make externally configured Services like `my-database.example.com` available to applications inside the cluster. If the externally defined Service resides within the same Namespace, using just the name `my-database` would make it available to other applications and Services within that same Namespace.
+
+## Multi-Port Services
+
+A Service resource can expose multiple ports at the same time if required. Its configuration is flexible enough to allow for multiple groupings of ports to be defined in the manifest. This is a helpful feature when exposing Pods with one container listening on more than one port, or when exposing Pods with multiple containers listening on one or more ports.
+
+A multi-port Service manifest is provided below:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: myapp
+  type: NodePort
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8080
+    targetPort: 80
+    nodePort: 31080
+  - name: https
+    protocol: TCP
+    port: 8443
+    targetPort: 443
+    nodePort: 31443
+```
+
+The `my-service` Service resource exposes Pods labeled `app==myapp` with possibly one container listening on ports `80` and `443`, as described by the two `targetPort` fields. The Service will be visible inside the cluster on its `ClusterIP` and ports `8080` and `8443` as described by the two `port` fields, and it will also be accessible to incoming requests from outside the cluster on the two `nodePort` fields `31080` and `31443`. When manifests describe multiple ports, they need to be named as well, for clarity, as described by the two `spec.port.name` fields with values `http` and `https` respectively. This Service is configured to capture traffic on ports 8080 and 8443 from within the cluster, or on ports 31080 and 31443 from outside the cluster, and forward that traffic to the ports 80 and 443 respectively of the Pods running the container.
+
+## Port Forwarding
+
+Another application exposure mechanism in Kubernetes is port forwarding. In Kubernetes, the port forwarding feature allows users to easily forward a local port to an application port. Thanks to its flexibility, the application port can be a Pod container port, a Service port, and even a Deployment container port (from its Pod template). This allows users to test and debug their application running in a remote cluster by targeting a port on their local workstation (either `http://localhost:port` or `http://127.0.0.1:port`), a solution for remote cloud clusters or virtualized on-premises clusters.
+
+Port forwarding can be utilized as an alternative to the NodePort Service type because it does not require knowledge of the public IP address of the Kubernetes Node. As long as there are no firewalls blocking access to the desired local workstation port, such as 8080 in the examples below, the port forwarding method can quickly allow access to the application running in the cluster.
+
+Based on the earlier explored `frontend` Deployment and `frontend-svc` Service, port forwarding can be easily achieved via one of the following methods:
+
+```bash
+$ kubectl port-forward deploy/frontend 8080:5000
+$ kubectl port-forward frontend-77cbdf6f79-qsdts 8080:5000
+$ kubectl port-forward svc/frontend-svc 8080:80
+```
+
+All three commands forward port 8080 of the local workstation to the container port 5000 of the Deployment and Pod respectively, and to the Service port 80. While the Pod resource type is implicit, therefore optional and can be omitted, the Deployment and Service resource types are required to be explicitly supplied in the presented syntax.
